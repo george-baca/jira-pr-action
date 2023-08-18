@@ -9,6 +9,7 @@ const INPUT_CLEAN_TITLE_REGEX = 'clean-title-regex'
 const INPUT_CLEAN_TITLE_REGEX_FLAGS = 'clean-title-regex-flags'
 const INPUT_PREVIEW_LINK = 'preview-link'
 
+const PREVIEW_LINK_TEXT = 'Preview'
 const JIRA_LINK_TEXT = 'Jira ticket'
 
 function cleanPullRequestTitle(title: string, cleanTitleRegex?: RegExp) {
@@ -57,10 +58,7 @@ async function run(): Promise<void> {
       repo: context.repo.repo,
       pull_number: prNumber,
     }
-
-    const PR_PREVIEW_LINE_REGEX = /\[([A-Z]+-\d+|HOTFIX|ADHOC)\] -/
-    const prPreviewMatch = prTitle.match(PR_PREVIEW_LINE_REGEX)
-    const PR_PREVIEW_LINE_TEXT = prPreviewMatch ? prPreviewMatch[0] : undefined
+    const prPreviewLine = previewLink ? `**[${PREVIEW_LINK_TEXT}](${previewLink})**\n` : ''
 
     let ticketLine = ''
     const headBranch = context.payload.pull_request.head.ref
@@ -72,15 +70,19 @@ async function run(): Promise<void> {
 
       if (!ticketRegex.test(prTitle)) request.title = `${ticketInBranch} - ${prTitle}`
     }
-    if (PR_PREVIEW_LINE_TEXT && ticketLine) {
+
+    const [rawTicketInBranch] = headBranch.match(new RegExp(/\([A-Z]+-\d+/)) || []
+
+    if ((prPreviewLine || ticketLine) && rawTicketInBranch) {
       let hasBodyChanged = false
       const updatedBody = prBody.replace(
         new RegExp(
-          `^(\\*\\*\\[${PR_PREVIEW_LINE_TEXT}\\][^\\n]+\\n)?` +
+          `^(\\*\\*\\[${PREVIEW_LINK_TEXT}\\][^\\n]+\\n)?` +
             `(\\*\\*\\[${JIRA_LINK_TEXT}\\][^\\n]+\\n)?\\n?`
         ),
         match => {
-          const replacement = `${PR_PREVIEW_LINE_TEXT}${ticketLine}\n`
+          const jiraLink = `**[rawTicketInBranch](https://${jiraAccount}.atlassian.net/browse/${rawTicketInBranch})**`
+          const replacement = jiraLink
           hasBodyChanged = match !== replacement
           return replacement
         }
