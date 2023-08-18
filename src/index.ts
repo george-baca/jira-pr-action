@@ -42,15 +42,17 @@ async function run(): Promise<void> {
 
     let ticketLine = ''
     const [ticketInTitle] = prTitle.match(ticketRegex) || []
-
+    console.log(`ticketInTitle: ${ticketInTitle}`)
     if (ticketInTitle) {
       const [rawTitle] = prTitle.match(/[A-Z]+-\d+/) || []
       if (rawTitle) {
         const jiraLink = `https://${jiraAccount}.atlassian.net/browse/${rawTitle}`
         ticketLine = `**[${JIRA_LINK_TEXT}](${jiraLink})**\n`
+        console.log(`ticketLine: ${ticketLine}`)
       }
     }
 
+    console.log(`ticketLine: ${ticketLine}`)
     if (ticketLine) {
       let hasBodyChanged = false
       const updatedBody = prBody.replace(
@@ -61,6 +63,8 @@ async function run(): Promise<void> {
           return replacement
         }
       )
+      console.log(`updatedBody: ${updatedBody}`)
+      console.log(`hasBodyChanged: ${hasBodyChanged}`)
       if (hasBodyChanged) request.body = updatedBody
     }
     if (request.body) {
@@ -69,8 +73,6 @@ async function run(): Promise<void> {
       if (response.status !== 200) {
         core.error(`Updating the pull request has failed with ${response.status}`)
       }
-    } else {
-      request.body = undefined
     }
   } catch (error) {
     /* istanbul ignore next */
