@@ -32,12 +32,7 @@ async function run(): Promise<void> {
 
     const prNumber = context.payload.pull_request.number
     const prTitle = context.payload.pull_request.title || /* istanbul ignore next */ ''
-    const prBody = (context.payload.pull_request.body || /* istanbul ignore next */ '').replace(
-      new RegExp(`(\\*\\*\\[${JIRA_LINK_TEXT}\\][^\\n]+\\n)?\\n?`),
-      match => {
-        return ''
-      }
-    )
+    let prBody = (context.payload.pull_request.body || /* istanbul ignore next */ '')
 
     const request: Parameters<typeof github.rest.pulls.update>[0] = {
       owner: context.repo.owner,
@@ -56,8 +51,18 @@ async function run(): Promise<void> {
       }
     }
 
+    const existingJiraRegex = new RegExp(
+      `\\*\\*\\[Jira ticket\\]\\(https:\\/\\/${jiraAccount}\\.atlassian\\.net\\/browse\\/[A-Z]+-\\d+\\)\\*\\*`
+    )
+
     if (ticketLine) {
-      request.body = `${prBody}\n\n${ticketLine}`
+      if (prBody.match(existingJiraRegex)) {
+        request.body = prBody.replace(existingJiraRegex, match => {
+          return ticketLine
+        })
+      } else {
+        request.body = `${prBody}\n\n${ticketLine}`
+      }
     }
     if (request.body) {
       const response = await github.rest.pulls.update(request)

@@ -224,6 +224,7 @@ describe('#pull-request', () => {
           const options = {
             branch: `${ticket}-some-feature`,
             updateStatus: HTTP_STATUS_SUCCESS,
+            prBody: `body\n\n**[Jira ticket](https://account.atlassian.net/browse/DELTA-123)**`,
             ticket,
           }
           ;({ setFailedSpy, errorSpy, prUpdateSpy } = await mockContext(options))
