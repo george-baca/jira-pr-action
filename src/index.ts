@@ -5,8 +5,6 @@ const INPUT_GITHUB_TOKEN = 'github-token'
 const INPUT_JIRA_ACCOUNT = 'jira-account'
 const INPUT_TICKET_REGEX = 'ticket-regex'
 const INPUT_TICKET_REGEX_FLAGS = 'ticket-regex-flags'
-const INPUT_EXCEPTION_REGEX = 'exception-regex'
-const INPUT_EXCEPTION_REGEX_FLAGS = 'exception-regex-flags'
 const INPUT_CLEAN_TITLE_REGEX = 'clean-title-regex'
 const INPUT_CLEAN_TITLE_REGEX_FLAGS = 'clean-title-regex-flags'
 const INPUT_PREVIEW_LINK = 'preview-link'
@@ -26,8 +24,6 @@ async function run(): Promise<void> {
     const jiraAccount = core.getInput(INPUT_JIRA_ACCOUNT)
     const ticketRegexInput = core.getInput(INPUT_TICKET_REGEX)
     const ticketRegexFlags = core.getInput(INPUT_TICKET_REGEX_FLAGS)
-    const exceptionRegex = core.getInput(INPUT_EXCEPTION_REGEX)
-    const exceptionRegexFlags = core.getInput(INPUT_EXCEPTION_REGEX_FLAGS)
     const cleanTitleRegexInput = core.getInput(INPUT_CLEAN_TITLE_REGEX)
     const cleanTitleRegexFlags = core.getInput(INPUT_CLEAN_TITLE_REGEX_FLAGS)
     const previewLink = core.getInput(INPUT_PREVIEW_LINK)
@@ -73,13 +69,6 @@ async function run(): Promise<void> {
       ticketLine = `**[${JIRA_LINK_TEXT}](${jiraLink})**\n`
 
       if (!ticketRegex.test(prTitle)) request.title = `${ticketInBranch} - ${prTitle}`
-    } else {
-      const isException = new RegExp(exceptionRegex, exceptionRegexFlags).test(headBranch)
-
-      if (!isException) {
-        const regexStr = ticketRegex.toString()
-        core.setFailed(`The current branch name does not start with a Jira ticket ${regexStr}.`)
-      }
     }
     if (prPreviewLine || ticketLine) {
       let hasBodyChanged = false

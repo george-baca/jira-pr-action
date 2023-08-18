@@ -1,5 +1,8 @@
 name: Jira Pull Request
 author: On Running
+branding:
+  icon: activity
+  color: blue
 description: Add Jira ticket to PR title / add links to PR description
 inputs:
   github-token:

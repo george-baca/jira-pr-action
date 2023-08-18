@@ -307,12 +307,6 @@ describe('#pull-request', () => {
         await import('.')
       })
 
-      it('sets failed status', () => {
-        expect(setFailedSpy).toHaveBeenCalledWith(
-          expect.stringContaining('branch name does not start with a Jira ticket')
-        )
-      })
-
       it('updates PR description with preview link only', () => {
         expect(prUpdateSpy).toHaveBeenCalledWith({
           ...DEFAULT_REQUEST_OPTIONS,
@@ -450,28 +444,6 @@ describe('#pull-request', () => {
             body: `**[Jira ticket](https://account.atlassian.net/browse/${ticket})**\n\nbody`,
           })
         })
-      })
-    })
-
-    describe('and when current branch does not include Jira ticket', () => {
-      beforeAll(async () => {
-        jest.resetModules()
-        jest.resetAllMocks()
-        preview = ''
-        const options = { branch: 'foo-bar', preview }
-
-        ;({ setFailedSpy, errorSpy, prUpdateSpy } = await mockContext(options))
-        await import('.')
-      })
-
-      it('sets failed status', () => {
-        expect(setFailedSpy).toHaveBeenCalledWith(
-          expect.stringContaining('branch name does not start with a Jira ticket')
-        )
-      })
-
-      it('does not update PR', () => {
-        expect(prUpdateSpy).not.toHaveBeenCalled()
       })
     })
   })
