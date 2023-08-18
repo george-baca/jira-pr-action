@@ -47,10 +47,8 @@ async function run(): Promise<void> {
       : undefined
 
     const prNumber = context.payload.pull_request.number
-    const prTitle = cleanPullRequestTitle(
-      context.payload.pull_request.title || /* istanbul ignore next */ '',
-      cleanTitleRegex
-    )
+    const rawPrTitle = context.payload.pull_request.title || /* istanbul ignore next */ ''
+    const prTitle = cleanPullRequestTitle(rawPrTitle, cleanTitleRegex)
     const prBody = context.payload.pull_request.body || /* istanbul ignore next */ ''
 
     const request: Parameters<typeof github.rest.pulls.update>[0] = {
@@ -71,17 +69,17 @@ async function run(): Promise<void> {
       if (!ticketRegex.test(prTitle)) request.title = `${ticketInBranch} - ${prTitle}`
     }
 
-    const [rawTicketInBranch] = headBranch.match(new RegExp(/\([A-Z]+-\d+/)) || []
+    const [rawTicketInBranch] = rawPrTitle.match(new RegExp(/\([A-Z]+-\d+/)) || []
 
-    if ((prPreviewLine || ticketLine) && rawTicketInBranch) {
+    if (rawTicketInBranch) {
       let hasBodyChanged = false
       const updatedBody = prBody.replace(
         new RegExp(
-          `^(\\*\\*\\[${PREVIEW_LINK_TEXT}\\][^\\n]+\\n)?` +
+          `^(\\*\\*\\[${rawTicketInBranch}\\][^\\n]+\\n)?` +
             `(\\*\\*\\[${JIRA_LINK_TEXT}\\][^\\n]+\\n)?\\n?`
         ),
         match => {
-          const jiraLink = `**[rawTicketInBranch](https://${jiraAccount}.atlassian.net/browse/${rawTicketInBranch})**`
+          const jiraLink = `**[${rawTicketInBranch}](https://${jiraAccount}.atlassian.net/browse/${rawTicketInBranch})**`
           const replacement = jiraLink
           hasBodyChanged = match !== replacement
           return replacement
