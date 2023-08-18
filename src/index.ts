@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import { context, getOctokit } from '@actions/github'
+import * as console from "console";
 
 const INPUT_GITHUB_TOKEN = 'github-token'
 const INPUT_JIRA_ACCOUNT = 'jira-account'
@@ -43,6 +44,10 @@ async function run(): Promise<void> {
     let ticketLine = ''
     const [ticketInTitle] = prTitle.match(ticketRegex) || []
     console.log(`ticketInTitle: ${ticketInTitle}`)
+    console.log(`prTitle: ${prTitle}`)
+    console.log(`prBody: ${prBody}`)
+    console.log(`ticketRegex: ${ticketRegex}`)
+    console.log(`pull_request: ${context.payload.pull_request}`)
     if (ticketInTitle) {
       const [rawTitle] = prTitle.match(/[A-Z]+-\d+/) || []
       if (rawTitle) {
