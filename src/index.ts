@@ -7,6 +7,31 @@ const INPUT_TICKET_REGEX = 'ticket-regex'
 
 const JIRA_LINK_TEXT = 'Jira ticket'
 
+function replaceExistingJiraTicket(
+  prBody: string,
+  ticketLine: string,
+  existingJiraRegex: RegExp
+): string {
+  return prBody.replace(existingJiraRegex, () => ticketLine);
+}
+
+function appendJiraTicket(prBody: string, ticketLine: string): string {
+  return `${prBody}\n\n${ticketLine}`
+}
+
+function handleJiraTicket(
+  prBody: string,
+  ticketLine: string | null,
+  existingJiraRegex: RegExp
+): string {
+  if (prBody.match(existingJiraRegex)) {
+    return replaceExistingJiraTicket(prBody, ticketLine || '', existingJiraRegex)
+  } else if (ticketLine) {
+    return appendJiraTicket(prBody, ticketLine)
+  }
+  return prBody
+}
+
 async function run(): Promise<void> {
   try {
     if (!context.payload.pull_request) return
@@ -32,7 +57,7 @@ async function run(): Promise<void> {
 
     const prNumber = context.payload.pull_request.number
     const prTitle = context.payload.pull_request.title || /* istanbul ignore next */ ''
-    let prBody = (context.payload.pull_request.body || /* istanbul ignore next */ '')
+    const prBody = context.payload.pull_request.body || /* istanbul ignore next */ ''
 
     const request: Parameters<typeof github.rest.pulls.update>[0] = {
       owner: context.repo.owner,
@@ -52,24 +77,12 @@ async function run(): Promise<void> {
     }
 
     const existingJiraRegex = new RegExp(
-      `\\*\\*\\[Jira ticket\\]\\(https:\\/\\/${jiraAccount}\\.atlassian\\.net\\/browse\\/[A-Z]+-\\d+\\)\\*\\*`
+      `\\*\\*\\[${JIRA_LINK_TEXT}\\]\\(https:\\/\\/${jiraAccount}\\.atlassian\\.net\\/browse\\/[A-Z]+-\\d+\\)\\*\\*`
     )
-
-    if (ticketLine) {
-      if (prBody.match(existingJiraRegex)) {
-        request.body = prBody.replace(existingJiraRegex, match => {
-          return ticketLine
-        })
-      } else {
-        request.body = `${prBody}\n\n${ticketLine}`
-      }
-    }
-    if (request.body) {
-      const response = await github.rest.pulls.update(request)
-
-      if (response.status !== 200) {
-        core.error(`Updating the pull request has failed with ${response.status}`)
-      }
+    request.body = handleJiraTicket(prBody, ticketLine, existingJiraRegex);
+    const response = await github.rest.pulls.update(request)
+    if (response.status !== 200) {
+      core.error(`Updating the pull request has failed with ${response.status}`)
     }
   } catch (error) {
     /* istanbul ignore next */
